@@ -437,6 +437,22 @@
 (define find-label
   (lambda (code) (fold *find-label '() code)))
 
+;; Branch and jump instructions add a signed offset to the program counter to effectuate the branch. The base
+;; value for the program counter is the instruction address following the instruction.
+;;
+;; offsets format is: '(default-offset case-offset-1 ... case-offset-n)
+(define read-offsets
+  (lambda (pos port)
+    (let* ((default-offset (read-s24 port))
+           (case-count (+ 1 (read-u30 port)))
+           (offsets (cons default-offset
+                          (let loop ((cnt case-count))
+                            (if (positive? cnt)
+                                (cons (read-s24 port) (loop (- cnt 1)))
+                                '()))))
+           (next-pos (+ pos 1 3 4 (* 3 case-count)))) ;; lookupswitch insn, default-offset, case-count, case-offsets
+      `(offsets ,(map (lambda (offset) (+ offset next-pos)) offsets)))))
+
 ;; instruction reader
 
 (define read-arguments
@@ -457,6 +473,7 @@
 			  ((eq? type 'string) (read-id 'string port))
 			  ((eq? type 'multiname) (read-id 'multiname port))
 			  ((eq? type 'method) (read-id 'method port))
+			  ((eq? type 'offsets) (read-offsets pos port)) ;; used by lookupswitch insn
 			  (else (error (format "unknown param type ~a" type)))))
 		       types)))
 	`(,pos ,opname ,@args)))))
@@ -1020,6 +1037,23 @@
 (define write-offset (lambda (x port)
   (let ((offset (+ (file-position port) 3)))
     (write-s24 (- (cadr x) offset) port))))
+
+;; Branch and jump instructions add a signed offset to the program counter to effectuate the branch. The base
+;; value for the program counter is the instruction address following the instruction.
+;;
+;; offsets format is: '(default-offset case-offset-1 ... case-offset-n)
+(define write-offsets
+  (lambda (offsets port)
+    (let* ((default-offset (car offsets))
+           (case-offsets (cdr offsets))
+           (case-count (- (length case-offsets) 1))
+           (next-pos (+ (file-position port) 3 4 (* 3 (length case-offsets)))))
+      (write-s24 default-offset)
+      (write-u30 case-count)
+      (let loop ((todo case-offsets))
+        (when (not (null? todo))
+          (write-s24 (car todo))
+          (loop (cdr todo)))))))
 
 (define write-arguments
   (lambda (args spec port)

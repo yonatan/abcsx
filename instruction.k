@@ -51,13 +51,16 @@
     (#x18 (ifge offset) (stack -2))
     (#x19 (ifstricteq offset) (stack -2))
     (#x1a (ifstrictne offset) (stack -2))
+    (#x1b (lookupswitch offsets) (stack -1)) ;; FIXME: special handling for case-offsets
     (#x1c (pushwith) (stack -1) (scope 1))
     (#x1d (popscope) (scope -1))
+    (#x1e (nextname) (stack -1))
     (#x21 (pushundefined) (stack 1))
     (#x24 (pushbyte u8) (stack 1))
     (#x25 (pushshort u30) (stack 1))
     (#x26 (pushtrue) (stack 1))
     (#x27 (pushfalse) (stack 1))
+    (#x28 (pushnan) (stack 1))
     (#x29 (pop) (stack -1))
     (#x2a (dup) (stack 1))
     (#x2b (swap))
@@ -66,6 +69,7 @@
     (#x2e (pushuint uinteger) (stack 1)) ; note: pushuint = 46 (0x2e) wrong description in spec P96
     (#x2f (pushdouble double) (stack 1)) ; note: pushdouble = 46 (0x2f) wrong description in spec
     (#x30 (pushscope) (stack -1) (scope 1))
+    (#x32 (hasnext2 register register) (stack 1))
     (#x40 (newfunction method) (stack 1))
     (#x41 (call u30) (stack (- -1 (arg 0))))
     (#x46 (callproperty multiname u30) (stack (- 0 (arg 1)))) ; FIXME: Doesn't consider runtime names
@@ -76,6 +80,7 @@
     (#x4a (constructprop multiname u30) (stack (- 0 (arg 1)))) ; FIXME: Doesn't consider runtime names
     (#x4c (callproplex multiname u30) (stack (- 0 (arg 1)))) ; FIXME: Doesn't consider runtime names
     (#x4f (callpropvoid multiname u30) (stack (- 1 (arg 1))))
+    (#x53 (makegenerictype u30) (stack (- (arg 0)))) ; FIXME: Undocumented, no idea if this is right - see http://stackoverflow.com/questions/553445/how-do-generics-vector-work-inside-the-avm
     (#x55 (newobject u30) (stack (- (+ (arg 0) (arg 0)) 1)))
     (#x56 (newarray u30) (stack (- 1 (arg 0))))
     (#x57 (newactivation) (stack 1))
@@ -92,11 +97,16 @@
     (#x65 (getscopeobject u8) (stack 1))
     (#x66 (getproperty multiname)) ; FIXME: Doesn't consider runtime names
     (#x68 (initproperty multiname) (stack -2)) ; FIXME: Doesn't consider runtime names
+    (#x6a (deleteproperty multiname)) ; FIXME: Doesn't consider runtime names
     (#x6c (getslot u30))
     (#x6d (setslot u30) (stack -2))
+    (#x73 (convert_i))
+    (#x74 (convert_u))
     (#x75 (convert_d))
+    (#x76 (convert_b))
     (#x80 (coerce multiname))
     (#x82 (coerce_a))
+    (#x85 (coerce_s))
     (#x90 (negate))
     (#x91 (increment))
     (#x93 (decrement))
@@ -122,6 +132,8 @@
     (#xb2 (istype multiname))
     (#xb3 (istypelate) (stack -1))
     (#xb4 (in) (stack -1))
+    (#xc0 (increment_i))
+    (#xc1 (decrement_i))
     (#xc5 (add_i) (stack -1))
     (#xc6 (subtract_i) (stack -1))
     (#xc7 (multiply_i) (stack -1))
