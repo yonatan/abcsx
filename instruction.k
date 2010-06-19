@@ -107,6 +107,7 @@
     (#x80 (coerce multiname))
     (#x82 (coerce_a))
     (#x85 (coerce_s))
+    (#x86 (astype multiname))
     (#x90 (negate))
     (#x91 (increment))
     (#x93 (decrement))
