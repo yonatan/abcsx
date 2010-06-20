@@ -30,6 +30,7 @@
 
 (define instructions
   '(
+    (#x02 (nop))
     (#x20 (pushnull) (stack 1))
     (#xb1 (instanceof) (stack -1))
     (#x70 (convert_s))
